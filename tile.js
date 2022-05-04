@@ -57,6 +57,15 @@ class Tile {
 
         return new Tile(this.imgPath, this.width, this.height, this.weight, this.rotation - 90,  _connectors);
     }
+
+    getTileVariants() {
+        // Add the variants of the tile.
+        const tileVariant = this.rotated90();
+        const tileVariant2 = tileVariant.rotated90();
+        const tileVariant3 = tileVariant2.rotated90();
+
+        return [tileVariant, tileVariant2, tileVariant3];
+    }
 }
 
 if (typeof module !== undefined) {

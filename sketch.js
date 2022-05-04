@@ -44,7 +44,7 @@ function draw() {
 				const tileOptions = cell.tileOptions;
 				if (tileOptions.length > 0) {
 					const rndOption = Math.floor(Math.random() * tileOptions.length);
-					const tileOption = tileOptions.splice(rndOption, 1);
+					const tileOption = tileOptions.splice(rndOption, 1)[0];
 					success = wfcGrid.streamlineTileOptionsAroundCell(cell, tileOption);
 					if (success) {
 						cell.collapseTo(tileOption);
@@ -83,7 +83,6 @@ function loadRoadTiles() {
 
 	wfcGrid.addTileVariants();
 	wfcGrid.load();
-	wfcGrid.initGrid();
 	// first time setup of the tile options.
 	wfcGrid.initCellTileOptions();
 
@@ -112,7 +111,6 @@ function loadTronTiles() {
 
 	wfcGrid.addTileVariants();
 	wfcGrid.load();
-	wfcGrid.initGrid();
 	// first time setup of the tile options.
 	wfcGrid.initCellTileOptions();
 

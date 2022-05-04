@@ -67,6 +67,7 @@ class WfcGrid {
         }
     }
 
+    // TODO: Unit Test/Refactor
     streamlineTileOptionsAroundCell(cell, tileIndex) {
         return this.streamlineCellNeighbor(cell, tileIndex, Direction.UP) &&
             this.streamlineCellNeighbor(cell, tileIndex, Direction.RIGHT) &&
@@ -74,6 +75,7 @@ class WfcGrid {
             this.streamlineCellNeighbor(cell, tileIndex, Direction.LEFT);
     }
 
+    // TODO: Unit Test/Refactor
     streamlineCellNeighbor(cell, tileIndex, direction) {
         const cellCol = cell.column;
         const cellRow = cell.row;
@@ -136,13 +138,8 @@ class WfcGrid {
         const tileLength = this.tiles.length;
         for (let i=0; i<tileLength; i++) {
             const tile = this.tiles[i];
-            // Add the variants of the tile.
-            const tileVariant = tile.rotated90();
-            const tileVariant2 = tileVariant.rotated90();
-            const tileVariant3 = tileVariant2.rotated90();
-            this.tiles.push(tileVariant);
-            this.tiles.push(tileVariant2);
-            this.tiles.push(tileVariant3);
+            const variants = tile.getTileVariants();
+            this.tiles.push(...variants);
         }
     }
 
@@ -186,6 +183,7 @@ class WfcGrid {
             return null;
         }
     }
+
     /**
      *
      * @returns The cell with the smallest enthropy value.

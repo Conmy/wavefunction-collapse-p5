@@ -82,3 +82,40 @@ test('calculateAllCellEnthropies calls calculateEnthropy on all cells in the gri
 
 });
 
+describe('addTileVariants', () => {
+    test('will go through the current list of tiles and' +
+    ' call getTileVariants on each tile.', () => {
+
+        const mockTile = {getTileVariants: jest.fn()};
+        // Assuming that the getTileVariants will return 3 "tiles" as variants
+        mockTile.getTileVariants.mockReturnValue([{}, {}, {}]);
+        const grid = new WfcGrid(1,1,1,1, [mockTile, mockTile]);
+
+        grid.addTileVariants();
+
+        // getTileVariants to be called on each tile in the initial tiles array.
+        expect(mockTile.getTileVariants.mock.calls.length).toEqual(2);
+    });
+
+    test('will add tile variants to the original tile array' +
+    'with the returned variants from Tile.prototype.getTileVariants', () => {
+
+        const mockTile = {getTileVariants: jest.fn()};
+        // Assuming that the getTileVariants will return 3 "tiles" as variants
+        mockTile.getTileVariants.mockReturnValue([{}, {}, {}]);
+        const grid = new WfcGrid(1,1,1,1, [mockTile, mockTile]);
+
+        expect(grid.tiles.length).toEqual(2);
+        grid.addTileVariants();
+
+        // Grid tiles increases by the number of tiles returned from the
+        // getTileVariants call on the tile objects.
+        expect(grid.tiles.length).toEqual(8);
+    });
+});
+
+describe('getCellOfLeastEnthropy', () => {
+    test('returns the cell with the lowest enthropy value', () => {
+
+    });
+});

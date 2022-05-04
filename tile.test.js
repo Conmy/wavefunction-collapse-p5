@@ -102,3 +102,13 @@ test('load will call the p5 loadImage function which is assumed in the global sc
 
     expect(global.loadImage.mock.calls.length).toBe(1);
 });
+
+test('getTileVariants should return variants of the tile for different rotations', () => {
+    const tile = new Tile('ImagePath', 1, 1, 0, 0, ['A', 'B', 'C', 'D']);
+
+    const tileVariants = tile.getTileVariants();
+
+    expect(tileVariants).toBeInstanceOf(Array);
+    expect(tileVariants.length).toBe(3); // the three other rotations of the tile.
+
+});
