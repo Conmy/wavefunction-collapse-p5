@@ -1,0 +1,22 @@
+{
+  "name": "wavefunction_collapse",
+  "version": "1.0.0",
+  "description": "p5.js implementation of a wavefunction collapse algorithm to make images",
+  "main": "index.html",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Conmy/wavefunction-collapse-p5.git"
+  },
+  "author": "David Conmy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Conmy/wavefunction-collapse-p5/issues"
+  },
+  "homepage": "https://github.com/Conmy/wavefunction-collapse-p5#readme",
+  "devDependencies": {
+    "jest": "^28.0.3"
+  }
+}

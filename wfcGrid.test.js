@@ -1,10 +1,11 @@
 const { WfcGrid } = require('./wfcGrid');
-const { WfcCell } = require('./WfcCell');
+const { WfcCell, WfcStatus } = require('./WfcCell');
 const { Tile } = require('./tile');
 
 beforeEach(() => {
     // Set up expected globally available objects.
     global.WfcCell = WfcCell;
+    global.WfcStatus = WfcStatus;
 });
 
 test('WfcGrid creates with properties correctly set', () => {
@@ -116,6 +117,23 @@ describe('addTileVariants', () => {
 
 describe('getCellOfLeastEnthropy', () => {
     test('returns the cell with the lowest enthropy value', () => {
+        const lowestRowIndex = 0;
+        const lowestColIndex = 3;
+        const grid = new WfcGrid(5,1,1,1,[]);
 
+        grid.grid.forEach((rows, rowIndex) => {
+            rows.forEach((cell, colIndex) => {
+                if (colIndex === lowestColIndex && rowIndex === lowestRowIndex) {
+                    cell.enthropy = 1.234;
+                } else {
+                    cell.enthropy = 2.2213;
+                }
+            });
+        });
+
+        const lowestEnthropyCell = grid.getCellOfLeastEnthropy();
+
+        expect(lowestEnthropyCell.row).toBe(lowestRowIndex);
+        expect(lowestEnthropyCell.column).toBe(lowestColIndex);
     });
 });
