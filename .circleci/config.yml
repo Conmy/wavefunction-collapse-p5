@@ -5,7 +5,8 @@ jobs:
       - image: cimg/node:17.9.0
     steps:
       - checkout
-      - run: "npm run start"
+      - run: "npm install"
+      - run: "npm run test"
 workflows:
     example-workflow:
       jobs:
