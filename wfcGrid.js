@@ -9,9 +9,10 @@ class WfcGrid {
         this.tileWidth = tileWidth;
         this.tileHeight = tileHeight;
         this.tiles = tiles;
+        this._initGrid();
     }
 
-    initGrid() {
+    _initGrid() {
         this.grid = new Array(this.rows);
         for (let i=0; i<this.grid.length; i++) {
             this.grid[i] = new Array(this.cols);
@@ -22,7 +23,6 @@ class WfcGrid {
                 this.grid[i][j] = new WfcCell(j, i);
             }
         }
-        // console.log('Initialized the grid', this.grid);
     }
 
     load() {
@@ -43,102 +43,93 @@ class WfcGrid {
                         this.tileWidth, this.tileHeight);
                 } else {
                     this.tiles[cell.chosenTileIndex].draw(
-                        colIndex * this.tileWidth, rowIndex * this.tileHeight,
-                        this.tileWidth, this.tileHeight);
+                        colIndex * this.tileWidth, rowIndex * this.tileHeight);
                 }
             });
         });
     }
 
-    populateCellTileOptions() {
+    initCellTileOptions() {
+        if (!this.grid || this.grid.length === 0) {
+            throw 'Grid is not initialized.';
+        }
         this.grid.forEach(row => row.forEach(cell => {
             cell.setTileOptions(Array.from({length: this.tiles.length}, (v,i) => i));
         }));
-        // console.log('tileOptions populated', this.grid);
     }
 
-    calculateCellEnthropies() {
+    calculateAllCellEnthropies() {
         for (let i=0; i<this.grid.length; i++) {
             for (let j=0; j<this.grid[i].length; j++) {
-                // console.log('Calculate enthropy of cell at', i, j, this.tiles);
-                this.grid[i][j].calculateEnthropy(this.tiles);
+                const currentCell = this._getCell(j, i);
+                currentCell.calculateEnthropy(this.tiles);
             }
         }
     }
 
-    collapseCell() {
-        const cell = this._getCellOfLeastEnthropy();
-        if (cell) {
-            cell.collapse();
-            return cell;
-        }
-        else {
-            // console.log('No Cell to collapse');
-        }
+    streamlineTileOptionsAroundCell(cell, tileIndex) {
+        return this.streamlineCellNeighbor(cell, tileIndex, Direction.UP) &&
+            this.streamlineCellNeighbor(cell, tileIndex, Direction.RIGHT) &&
+            this.streamlineCellNeighbor(cell, tileIndex, Direction.DOWN) &&
+            this.streamlineCellNeighbor(cell, tileIndex, Direction.LEFT);
     }
 
-    streamlineOptions(cell) {
-        this.streamlineCellNeighbor(cell, Direction.UP);
-        this.streamlineCellNeighbor(cell, Direction.RIGHT);
-        this.streamlineCellNeighbor(cell, Direction.DOWN);
-        this.streamlineCellNeighbor(cell, Direction.LEFT);
-    }
-
-    streamlineCellNeighbor(cell, direction) {
+    streamlineCellNeighbor(cell, tileIndex, direction) {
         const cellCol = cell.column;
         const cellRow = cell.row;
-        const currentTile = this.tiles[cell.chosenTileIndex];
+        const currentTile = this.tiles[tileIndex];
 
         // Figure out the comparison cell.
         let compCell;
         if (direction === Direction.UP) {
             if (cellRow <= 0) {
-                // console.log("Can't streamline UP from current position", cellCol, cellRow);
-                return;
+                return true;
             }
             compCell = this._getCell(cellCol, cellRow - 1);
         } else if (direction === Direction.RIGHT) {
-            // Cell Column must be less than the max columns
             if (cellCol >= this.cols - 1) {
-                // console.log("Can't streamline RIGHT from current position", cellCol, cellRow);
-                return;
+                return true;
             }
             compCell = this._getCell(cellCol + 1, cellRow);
         } else if (direction == Direction.DOWN) {
-            // Cell row must be less than max rows
             if (cellRow >= this.rows - 1) {
-                // console.log("Can't streamline DOWN from current position", cellCol, cellRow);
-                return;
+                return true;
             }
             compCell = this._getCell(cellCol, cellRow + 1);
         } else if (direction == Direction.LEFT) {
             if (cellCol <= 0) {
-                // console.log("Can't streamline LEFT from current position", cellCol, cellRow);
-                return;
+                return true;
             }
             compCell = this._getCell(cellCol - 1, cellRow);
         }
 
         if (compCell.status === WfcStatus.COLLAPSED) {
             // console.log("Cell is already collapsed", compCell);
-            return;
+            // TODO: Should we check here for validity?
+            // e.g. if we collapsed to an invalid neighbor that is already collapsed
+            // and this was somehow not caught before now?
+            return true;
         }
 
-        const createNewValidOptions = (totalValidOptions, currentTileOption) => {
+        const reduceToValidTileOptions = (totalValidOptions, currentTileOption) => {
             if (currentTile.canConnect(this.tiles[currentTileOption], direction)) {
                 totalValidOptions.push(currentTileOption);
             }
             return totalValidOptions;
         }
-        const validOptions = compCell.tileOptions.reduce(createNewValidOptions, []);
+        const validTileOptions = compCell.tileOptions.reduce(reduceToValidTileOptions, []);
 
-        // set the tile options on the compCell.
-        compCell.setTileOptions(validOptions);
-
-        // ensure there is at least one valid option.
-        if (validOptions.length === 0) {
+        if (validTileOptions.length === 0) {
             console.error("No valid options for the cell", cell, compCell);
+            return false;
         }
+
+        // TODO: move this out to be done AFTER checking that it is valid for all 4 sides.
+        // set the tile options on the compCell.
+        compCell.setTileOptions(validTileOptions);
+        // recalculate enthropy for the cell.
+        compCell.calculateEnthropy(this.tiles);
+        return true;
     }
 
     addTileVariants() {
@@ -155,41 +146,158 @@ class WfcGrid {
         }
     }
 
-    // Gets the cell with the smallest enthropy value.
-    _getCellOfLeastEnthropy() {
-        let smallestValue;
-        let smallestCell;
-
-        // console.log('Checking grid for smallest enthropy', this.grid);
-        this.grid.forEach((row) => {
-            row.forEach((cell) => {
-                if (cell.status === WfcStatus.OPEN) {
-                    // populate the smallestValue on first pass and if cell entropy is smaller.
-                    if ((!smallestValue) || cell.enthropy < smallestValue) {
-                        smallestValue = cell.enthropy;
-                        smallestCell = cell;
-                    }
-                } else {
-                    // console.log('Cell is already collapsed. Skipping', cell);
-                }
-            });
-        });
-
-        return smallestCell;
-    }
-
-    isFinished() {
+    isFullyPopulated() {
+        let fullyPopulated = true;
         this.grid.forEach(row => {
             row.forEach(cell => {
                 if (cell.status === WfcStatus.OPEN){
-                    return false;
+                    fullyPopulated = false;
                 }
             });
         });
-        return true;
+        return fullyPopulated;
+    }
+
+    getCellOfHighestEnthropy() {
+        let largestValue = -100;
+        let largestCells = [];
+
+        for (let i=0; i < this.grid.length; i++) {
+            for (let j=0; j < this.grid[i].length; j++) {
+                let currentCell = this.grid[i][j];
+
+                if (curentCell.status === WfcStatus.OPEN) {
+                    if (largestValue === -100) {
+                        largestValue = currentCell.enthropy;
+                        largestCells.push(curentCell);
+                    } else if (currentCell.enthropy === largestValue) {
+                        largestCells.push(currentCell);
+                    } else if (currentCell.enthropy > largestValue) {
+                        largestValue = currentCell.enthropy;
+                        largestCells = [currentCell];
+                    }
+                }
+            }
+        }
+
+        if (largestCells.length > 0) {
+            return largestCells[Math.floor(Math.random() * largestCells.length)];
+        } else {
+            return null;
+        }
+    }
+    /**
+     *
+     * @returns The cell with the smallest enthropy value.
+     */
+    getCellOfLeastEnthropy() {
+        let smallestValue;
+        let smallestCells = [];
+
+        this.grid.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                // only recalculate enthropy of open cells.
+                if (cell.status === WfcStatus.OPEN) {
+                    if (!smallestValue) {
+                        // populate the smallestValue on first pass
+                        smallestValue = cell.enthropy;
+                        smallestCells.push(cell);
+                    } else if (cell.enthropy === smallestValue) {
+                        smallestCells.push(cell)
+                    } else if (cell.enthropy < smallestValue) {
+                        smallestCells = [cell];
+                        smallestValue = cell.enthropy;
+                    }
+                }
+            });
+        });
+
+        if (smallestCells.length >= 1) {
+            return smallestCells[Math.floor(Math.random() * smallestCells.length)];
+        } else {
+            return null;
+        }
+    }
+
+    updateCellTileOptions(cell) {
+        let tileOptionList = Array.from({length:this.tiles.length}, (v,i) => i);
+        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.UP, tileOptionList);
+        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.RIGHT, tileOptionList);
+        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.DOWN, tileOptionList);
+        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.LEFT, tileOptionList);
+        if (tileOptionList.length === 0) {
+            console.error("No valid options for the cell after re-calc", cell);
+            cell.tileOptions = [];
+        }
+        cell.tileOptions = tileOptionList;
+    }
+
+    getValidTileOptionsForCell(cell, direction, currentTileOptions) {
+
+        const cellCol = cell.column;
+        const cellRow = cell.row;
+
+        let otherRowIndex = cellRow;
+        let otherColIndex = cellCol;
+
+        // Check extremes of the grid - if there's no cells in the direction from the current cell,
+        // just return the current options.
+        if (direction === Direction.UP) {
+            if (cellRow === 0) {
+                return currentTileOptions.slice();
+            }
+            otherRowIndex = cellRow - 1;
+        }
+        if (direction === Direction.RIGHT) {
+            if (cellCol >= this.cols - 1) {
+                return currentTileOptions.slice();
+            }
+            otherColIndex = cellCol + 1;
+        }
+        if (direction === Direction.DOWN) {
+            if (cellRow >= this.rows - 1) {
+                return currentTileOptions.slice();
+            }
+            otherRowIndex = cellRow + 1;
+        }
+        if (direction === Direction.LEFT) {
+            if (cellCol === 0) {
+                return currentTileOptions.slice();
+            }
+            otherColIndex = cellCol - 1;
+        }
+
+        // Get the cell in the direction for checking.
+        const otherCell = this.grid[otherRowIndex][otherColIndex];
+
+        // If the "other" cell is already collapsed, ensure that the current cell options
+        // can match to that cell.
+
+        if (otherCell.status === WfcStatus.COLLAPSED) {
+            const otherCellTile = this.tiles[otherCell.chosenTileIndex];
+            const stillValidTileIndexes = [];
+            for (let i=0; i<cell.tileOptions.length; i++) {
+                const currentTileIndex = cell.tileOptions[i];
+                const tileUnderTest = this.tiles[currentTileIndex];
+                if (tileUnderTest.canConnect(otherCellTile, direction)) {
+                    stillValidTileIndexes.push(currentTileIndex);
+                }
+            }
+            return stillValidTileIndexes;
+        }
+        else {
+            // We have to do something else if there's no tile??
+            // Or just return current tile options??
+        }
+        return currentTileOptions.slice();
+
     }
 
     _getCell(column, row){
         return this.grid[row][column];
     }
+}
+
+if (typeof module !== undefined) {
+    module.exports = { WfcGrid };
 }

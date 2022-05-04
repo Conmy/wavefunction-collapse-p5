@@ -10,7 +10,11 @@
 		<script src="tile.js"></script>
 		<script src="wfcCell.js"></script>
 		<script src="wfcGrid.js"></script>
+		<script src="utils.js"></script>
 		<style>
+			html, body {
+				height: 100%;
+			}
 			body {
 				margin: 0;
 				padding: 0;
@@ -18,7 +22,27 @@
 			canvas {
 				margin: auto;
 			}
+			#buttonContainer {
+				height: 2em;
+				width: 100%;
+				background-color: orange;
+				display: flex;
+				gap: 2em;
+				align-items: center;
+				justify-content: center;
+			}
+
+			#sketchContainer {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-top: 10px;
+			}
+
 		</style>
 	</head>
-	<body></body>
+	<body>
+		<div id="buttonContainer"></div>
+		<div id="sketchContainer"></div>
+	</body>
 </html>
