@@ -4,7 +4,8 @@
   "description": "p5.js implementation of a wavefunction collapse algorithm to make images",
   "main": "index.html",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -17,6 +18,7 @@
   },
   "homepage": "https://github.com/Conmy/wavefunction-collapse-p5#readme",
   "devDependencies": {
+    "husky": "^7.0.4",
     "jest": "^28.0.3"
   }
 }
