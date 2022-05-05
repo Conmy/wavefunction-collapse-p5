@@ -1,5 +1,5 @@
 const { WfcGrid } = require('./wfcGrid');
-const { WfcCell, WfcStatus } = require('./WfcCell');
+const { WfcCell, WfcStatus } = require('./wfcCell');
 const { Tile } = require('./tile');
 
 beforeEach(() => {
