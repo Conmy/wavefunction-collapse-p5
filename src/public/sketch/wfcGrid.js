@@ -61,7 +61,7 @@ class WfcGrid {
     calculateAllCellEnthropies() {
         for (let i=0; i<this.grid.length; i++) {
             for (let j=0; j<this.grid[i].length; j++) {
-                const currentCell = this._getCell(j, i);
+                const currentCell = this.getCell(j, i);
                 currentCell.calculateEnthropy(this.tiles);
             }
         }
@@ -87,22 +87,22 @@ class WfcGrid {
             if (cellRow <= 0) {
                 return true;
             }
-            compCell = this._getCell(cellCol, cellRow - 1);
+            compCell = this.getCell(cellCol, cellRow - 1);
         } else if (direction === Direction.RIGHT) {
             if (cellCol >= this.cols - 1) {
                 return true;
             }
-            compCell = this._getCell(cellCol + 1, cellRow);
+            compCell = this.getCell(cellCol + 1, cellRow);
         } else if (direction == Direction.DOWN) {
             if (cellRow >= this.rows - 1) {
                 return true;
             }
-            compCell = this._getCell(cellCol, cellRow + 1);
+            compCell = this.getCell(cellCol, cellRow + 1);
         } else if (direction == Direction.LEFT) {
             if (cellCol <= 0) {
                 return true;
             }
-            compCell = this._getCell(cellCol - 1, cellRow);
+            compCell = this.getCell(cellCol - 1, cellRow);
         }
 
         if (compCell.status === WfcStatus.COLLAPSED) {
@@ -291,7 +291,14 @@ class WfcGrid {
 
     }
 
-    _getCell(column, row){
+    getCell(column, row){
+        if (column >= this.cols || column < 0) {
+            throw `Could not find cell in column index ${column}. Out of grid bounds`;
+        }
+        if (row >= this.rows || row < 0) {
+            throw `Could not find cell in row index ${row}. Out of grid bounds`;
+        }
+
         return this.grid[row][column];
     }
 }

@@ -1,4 +1,4 @@
-const { Tile, Direction } = require('./tile');
+const { Tile, Direction } = require('../public/sketch/tile');
 
 afterEach(() => {
     jest.clearAllMocks();

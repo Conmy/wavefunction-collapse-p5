@@ -1,4 +1,4 @@
-const { WfcCell, WfcStatus } = require('./wfcCell');
+const { WfcCell, WfcStatus } = require('../public/sketch/wfcCell');
 
 test('WfcCell gets created with a ref to its position in the grid', () => {
     let cell = new WfcCell(3, 0);

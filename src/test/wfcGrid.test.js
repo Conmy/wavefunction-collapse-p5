@@ -1,6 +1,6 @@
-const { WfcGrid } = require('./wfcGrid');
-const { WfcCell, WfcStatus } = require('./wfcCell');
-const { Tile } = require('./tile');
+const { WfcGrid } = require('../public/sketch/wfcGrid');
+const { WfcCell, WfcStatus } = require('../public/sketch/wfcCell');
+const { Tile } = require('../public/sketch/tile');
 
 beforeEach(() => {
     // Set up expected globally available objects.
@@ -42,25 +42,6 @@ test('grid property inside WfcGrid is initialized on contstruction', () => {
     }
 });
 
-test('initCellTileOptions sets the tileOptions of the grid cells to an array of all tile indices', () => {
-    const cols = 4;
-    const rows = 5;
-    const tiles = ['A', 'B', 'C', 'D', 'E', 'F'];
-    const grid = new WfcGrid(cols, rows, 10, 10, tiles);
-
-    grid.initCellTileOptions();
-
-    for (let i=0; i<rows; i++) {
-        for (let j=0; j<cols; j++) {
-            const currentCell = grid.grid[i][j];
-            const tileOptions = currentCell.tileOptions;
-
-            expect(tileOptions).toBeInstanceOf(Array);
-            expect(tileOptions.length).toBe(tiles.length);
-            tileOptions.forEach((option, idx) => expect(option).toEqual(idx));
-        }
-    }
-});
 
 test('calculateAllCellEnthropies calls calculateEnthropy on all cells in the grid', () => {
     const cols = 4;
@@ -139,5 +120,72 @@ describe('getCellOfLeastEnthropy', () => {
 
         expect(lowestEnthropyCell.row).toBe(lowestRowIndex);
         expect(lowestEnthropyCell.column).toBe(lowestColIndex);
+    });
+});
+
+describe('getCell', () => {
+    test('should return the cell at the given location in the grid', () => {
+        const grid = new WfcGrid(3, 3, 10, 10, [
+            new Tile('imagePath', 10, 10, 1, 0, ['A', 'B', 'C', 'D']),
+            new Tile('imagePath', 10, 10, 1, 0, ['C', 'D', 'A', 'B']),
+        ]);
+
+        const cellAt1_2 = grid.getCell(1,2);
+        expect(cellAt1_2.column).toBe(1);
+        expect(cellAt1_2.row).toBe(2);
+    });
+
+    test('should not return a cell if index is out of range of the grid bounds', () => {
+        const grid = new WfcGrid(3, 3, 10, 10, [
+            new Tile('imagePath', 10, 10, 1, 0, ['A', 'B', 'C', 'D']),
+            new Tile('imagePath', 10, 10, 1, 0, ['C', 'D', 'A', 'B']),
+        ]);
+
+        const exceedsCol = 3;
+        const exceedsRow = 3;
+
+        expect(() => {
+            grid.getCell(exceedsCol, 0);
+        }).toThrow(`Could not find cell in column index ${exceedsCol}. Out of grid bounds`);
+
+        expect(() => {
+            grid.getCell(0, exceedsRow);
+        }).toThrow(`Could not find cell in row index ${exceedsRow}. Out of grid bounds`);
+
+    });
+
+});
+
+describe('tileOptions', () => {
+
+    test('initCellTileOptions sets the tileOptions of the grid cells to an array of all tile indices', () => {
+        const cols = 4;
+        const rows = 5;
+        const tiles = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const grid = new WfcGrid(cols, rows, 10, 10, tiles);
+
+        grid.initCellTileOptions();
+
+        for (let i=0; i<rows; i++) {
+            for (let j=0; j<cols; j++) {
+                const currentCell = grid.grid[i][j];
+                const tileOptions = currentCell.tileOptions;
+
+                expect(tileOptions).toBeInstanceOf(Array);
+                expect(tileOptions.length).toBe(tiles.length);
+                tileOptions.forEach((option, idx) => expect(option).toEqual(idx));
+            }
+        }
+    });
+
+    test('getValidTileOptionsForCell should return all valid tileOptions' +
+    'for a cell in a given direction', () => {
+        const cols = 4;
+        const rows = 5;
+        const tiles = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const grid = new WfcGrid(cols, rows, 10, 10, tiles);
+
+        const cell = grid.getCell(2, 2);
+
     });
 });
