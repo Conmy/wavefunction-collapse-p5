@@ -8,6 +8,10 @@ beforeEach(() => {
     global.WfcStatus = WfcStatus;
 });
 
+afterEach(() => {
+    jest.clearAllMocks();
+});
+
 test('WfcGrid creates with properties correctly set', () => {
     const cols = 2;
     const rows = 2;
