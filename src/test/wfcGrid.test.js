@@ -178,14 +178,4 @@ describe('tileOptions', () => {
         }
     });
 
-    test('getValidTileOptionsForCell should return all valid tileOptions' +
-    'for a cell in a given direction', () => {
-        const cols = 4;
-        const rows = 5;
-        const tiles = ['A', 'B', 'C', 'D', 'E', 'F'];
-        const grid = new WfcGrid(cols, rows, 10, 10, tiles);
-
-        const cell = grid.getCell(2, 2);
-
-    });
 });
