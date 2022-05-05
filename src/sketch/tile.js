@@ -13,14 +13,15 @@ const Direction = {
 };
 
 class Tile {
-    constructor (imgPath, width, height, weight, rotation, connectors) {
+    constructor (imgPath, width, height, weight, rotation, connectors, isFlipped=false) {
         this.name = 'Tile';
         this.imgPath = imgPath;
-        this.connectors = connectors;
-        this.weight = weight;
-        this.rotation = rotation;
         this.width = width;
         this.height = height;
+        this.weight = weight;
+        this.rotation = rotation;
+        this.connectors = connectors;
+        this.isFlipped = isFlipped;
     }
 
     load () {
@@ -33,10 +34,26 @@ class Tile {
             translate(this.width/2+x, this.height/2+y);
             imageMode(CENTER);
             rotate(PI/180 * this.rotation);
-            image(this.img, 0, 0, this.width, this.height);
+            if (this.isFlipped) {
+                push();
+                translate(x*this.width, y*this.height);
+                scale(-1, 1);
+                image(this.img, 0, 0, this.width, this.height);
+                pop();
+            } else {
+                image(this.img, 0, 0, this.width, this.height);
+            }
             pop();
         } else {
-            image(this.img, x, y, this.width, this.height);
+            if (this.isFlipped) {
+                push();
+                translate(x*this.width, y*this.height);
+                scale(-1, 1);
+                image(this.img, 0, 0, this.width, this.height);
+                pop();
+            } else {
+                image(this.img, 0, 0, this.width, this.height);
+            }
         }
     }
 
@@ -46,7 +63,24 @@ class Tile {
     }
 
     canConnect (tile, direction) {
-        return tile.getConnector(Direction.opposite(direction)) === this.getConnector(direction);
+        const oppositeConnection =
+            tile.getConnector(Direction.opposite(direction));
+        const thisConnection =
+            this.getConnector(direction);
+
+        if (this.connectorIsAsymetrical(direction)) {
+            const thisSymmetryType = thisConnection.slice(-1);
+            if (thisSymmetryType === 'a') {
+                return oppositeConnection.slice(0, -1) === thisConnection.slice(0, -1)
+                    && oppositeConnection.slice(-1) === 'f';
+            } else if (thisSymmetryType === 'f') {
+                return oppositeConnection.slice(0, -1) === thisConnection.slice(0, -1)
+                    && oppositeConnection.slice(-1) === 'a';
+            }
+        } else {
+            return thisConnection === oppositeConnection;
+        }
+
     }
 
     /**
@@ -58,13 +92,58 @@ class Tile {
         return new Tile(this.imgPath, this.width, this.height, this.weight, this.rotation - 90,  _connectors);
     }
 
-    getTileVariants() {
-        // Add the variants of the tile.
-        const tileVariant = this.rotated90();
-        const tileVariant2 = tileVariant.rotated90();
-        const tileVariant3 = tileVariant2.rotated90();
+    connectorIsAsymetrical(direction) {
+        return this.connectors[direction].slice(-1) === 'a'
+            || this.connectors[direction].slice(-1) === 'f';
+    }
 
-        return [tileVariant, tileVariant2, tileVariant3];
+    getTileVariants() {
+        const newVariants = [];
+
+
+        const rotated90 = this.rotated90();
+        const rotated180 = rotated90.rotated90();
+        const rotated270 = rotated180.rotated90();
+
+        newVariants.push(rotated90, rotated180, rotated270);
+
+        const hasAsymmetry = this.connectorIsAsymetrical(Direction.UP)
+            || this.connectorIsAsymetrical(Direction.RIGHT)
+            || this.connectorIsAsymetrical(Direction.LEFT)
+            || this.connectorIsAsymetrical(Direction.DOWN);
+
+        if (hasAsymmetry) {
+            newVariants.push(
+                this.getFlipped(),
+                rotated90.getFlipped(),
+                rotated180.getFlipped(),
+                rotated270.getFlipped()
+            );
+        }
+
+        return newVariants;
+    }
+
+    getFlipped() {
+        const newConnectors = [];
+        this.connectors.forEach((conn, connIndex) => {
+            let connectorIndicator = '';
+            if (connIndex === Direction.UP || connIndex === Direction.DOWN) {
+                if (conn.slice(-1) === 'a') {
+                    connectorIndicator = conn.slice(0, -1) + 'f';
+                } else {
+                    connectorIndicator = conn;
+                }
+            }
+            else if (connIndex === Direction.RIGHT) {
+                connectorIndicator = this.connectors[Direction.LEFT];
+            } else if (connIndex === Direction.LEFT) {
+                connectorIndicator = this.connectors[Direction.RIGHT];
+            }
+            newConnectors.push(connectorIndicator);
+        });
+        return new Tile(this.imgPath, this.width, this.height,
+            this.weight, this.rotation, newConnectors, !this.isFlipped);
     }
 }
 

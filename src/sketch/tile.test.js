@@ -51,7 +51,8 @@ test('Tile sides can connect to like named sides', () => {
 });
 
 
-test('rotated90 returns a new tile with mostly the same properties except rotated 90degrees', () => {
+test('rotated90 returns a new tile with mostly the same properties except ' +
+'rotated 90 degrees', () => {
     const inTile = new Tile('HelloWorld', 20, 15, 1, 0, ['A','B', 'C', 'D']);
 
     const outTile = inTile.rotated90();
@@ -94,7 +95,8 @@ test('rotated90 does not change the original tile properties', () => {
     expect(inTile.getConnector(3)).toBe('D');
 });
 
-test('load will call the p5 loadImage function which is assumed in the global scope at runtime', () => {
+test('load will call the p5 loadImage function which is assumed in the global ' +
+'scope at runtime', () => {
     global.loadImage = jest.fn();
 
     const inTile = new Tile('HelloWorld', 20, 20, 0, 0, []);
@@ -111,4 +113,106 @@ test('getTileVariants should return variants of the tile for different rotations
     expect(tileVariants).toBeInstanceOf(Array);
     expect(tileVariants.length).toBe(3); // the three other rotations of the tile.
 
+});
+
+describe('Asymetrical tiles', () => {
+
+    test('Tile is, by default, not flipped', () => {
+        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['A','B','C','D']);
+
+        expect(tile.isFlipped).toBe(false);
+    });
+
+    test('Flipping an asymetrical tile changes the UP, DOWN connectors as ' +
+    'flipped and inverts the LEFT, RIGHT connectors', () => {
+        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['Aa','Ba','Ca','Da']);
+
+        const flippedTile = tile.getFlipped();
+        expect(flippedTile.connectors[Direction.UP]).toBe('Af');
+        expect(flippedTile.connectors[Direction.RIGHT]).toBe('Da');
+        expect(flippedTile.connectors[Direction.DOWN]).toBe('Cf');
+        expect(flippedTile.connectors[Direction.LEFT]).toBe('Ba');
+    });
+
+    test("If a connector value isn't asymetrical during a flip, its value " +
+    "doesn't change", () => {
+        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['A','Ba','Ca','Da']);
+
+        const flippedTile = tile.getFlipped();
+        expect(flippedTile.connectors[Direction.UP]).toBe('A');
+        expect(flippedTile.connectors[Direction.RIGHT]).toBe('Da');
+        expect(flippedTile.connectors[Direction.DOWN]).toBe('Cf');
+        expect(flippedTile.connectors[Direction.LEFT]).toBe('Ba');
+    });
+
+    test('Flipping an image sets the flipped property to true', () => {
+        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['Aa','Ba','Ca','Da']);
+
+        const flippedTile = tile.getFlipped();
+        expect(flippedTile.isFlipped).toBe(true);
+    });
+
+    test("getTileVariants creates flipped tiles when there's an asymetrical " +
+    'connector present', () => {
+        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['Aa', 'B', 'C', 'D']);
+
+        const tileVariants = tile.getTileVariants();
+
+        expect(tileVariants.length).toBe(7);
+    });
+
+    test("The number of asymetrical connectors doesn't matter as long as " +
+    "there's one, we expect more variants.", () => {
+        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['Aa', 'Ba', 'C', 'D']);
+
+        const tileVariants = tile.getTileVariants();
+
+        expect(tileVariants.length).toBe(7);
+    });
+
+    test("connectorIsAsymetrical returns true if the connector ends in 'a'", () => {
+        const tile = new Tile('imagePath', 5, 5, 1, 0, ['A', 'B', 'C', 'D']);
+        const asymTile = new Tile('imagePath', 5, 5, 1, 0, ['Aa', 'Ba', 'Ca', 'Da'], false);
+        const flippedAsymTile = new Tile('imagePath', 5, 5, 1, 0, ['Af', 'Bf', 'Cf', 'Df'], true);
+
+        expect(tile.connectorIsAsymetrical(Direction.UP)).toBe(false);
+        expect(tile.connectorIsAsymetrical(Direction.RIGHT)).toBe(false);
+        expect(tile.connectorIsAsymetrical(Direction.DOWN)).toBe(false);
+        expect(tile.connectorIsAsymetrical(Direction.LEFT)).toBe(false);
+
+        expect(asymTile.connectorIsAsymetrical(Direction.UP)).toBe(true);
+        expect(asymTile.connectorIsAsymetrical(Direction.RIGHT)).toBe(true);
+        expect(asymTile.connectorIsAsymetrical(Direction.DOWN)).toBe(true);
+        expect(asymTile.connectorIsAsymetrical(Direction.LEFT)).toBe(true);
+
+        expect(flippedAsymTile.connectorIsAsymetrical(Direction.UP)).toBe(true);
+        expect(flippedAsymTile.connectorIsAsymetrical(Direction.RIGHT)).toBe(true);
+        expect(flippedAsymTile.connectorIsAsymetrical(Direction.DOWN)).toBe(true);
+        expect(flippedAsymTile.connectorIsAsymetrical(Direction.LEFT)).toBe(true);
+
+    });
+
+    test('Asymetrical connectors will only connect to their flipped version.', () => {
+        const tile =
+            new Tile('imagePath', 5, 5, 1, 0, ['Aa', 'Ba', 'Ca', 'Da']);
+        const flippedMatchingTile =
+            new Tile('imagePath', 5, 5, 1, 0, ['Cf', 'Df', 'Af', 'Bf']);
+
+        expect(tile.canConnect(flippedMatchingTile, Direction.UP)).toBe(true);
+        expect(tile.canConnect(flippedMatchingTile, Direction.RIGHT)).toBe(true);
+        expect(tile.canConnect(flippedMatchingTile, Direction.DOWN)).toBe(true);
+        expect(tile.canConnect(flippedMatchingTile, Direction.LEFT)).toBe(true);
+    });
+
+    test("Asymetrical connectors won't connect to the same version of themselves", () => {
+        const tile =
+            new Tile('imagePath', 5, 5, 1, 0, ['Aa', 'Ba', 'Ca', 'Da']);
+        const flippedNonMatchingTile =
+            new Tile('imagePath', 5, 5, 1, 0, ['Ca', 'Da', 'Aa', 'Ba']);
+
+        expect(tile.canConnect(flippedNonMatchingTile, Direction.UP)).toBe(false);
+        expect(tile.canConnect(flippedNonMatchingTile, Direction.RIGHT)).toBe(false);
+        expect(tile.canConnect(flippedNonMatchingTile, Direction.DOWN)).toBe(false);
+        expect(tile.canConnect(flippedNonMatchingTile, Direction.LEFT)).toBe(false);
+    });
 });
