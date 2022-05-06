@@ -1,11 +1,12 @@
 const { WfcGrid } = require('../public/sketch/wfcGrid');
 const { WfcCell, WfcStatus } = require('../public/sketch/wfcCell');
-const { Tile } = require('../public/sketch/tile');
+const { Tile, Direction } = require('../public/sketch/tile');
 
 beforeEach(() => {
     // Set up expected globally available objects.
     global.WfcCell = WfcCell;
     global.WfcStatus = WfcStatus;
+    global.Direction = Direction;
 });
 
 afterEach(() => {
@@ -156,9 +157,9 @@ describe('getCell', () => {
 
 });
 
-describe('tileOptions', () => {
+describe('initCellTileOptions', () => {
 
-    test('initCellTileOptions sets the tileOptions of the grid cells to an array of all tile indices', () => {
+    test('sets the tileOptions of the grid cells to an array of all tile indices', () => {
         const cols = 4;
         const rows = 5;
         const tiles = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -177,5 +178,68 @@ describe('tileOptions', () => {
             }
         }
     });
+});
 
+describe('updateCellTileOptions', () => {
+    test("should check the cells around a cell and eliminate options that " +
+    "can't connect", () => {
+        const cols = 3;
+        const rows = 3;
+        const grid = new WfcGrid(cols, rows, 10, 10, [
+            new Tile('imagePath', 10, 10, 1, 0, ['A', 'B', 'C', 'D']),
+            // Invalid to connections from 0 in all directions
+            new Tile('imagePath', 10, 10, 1, 0, ['A', 'B', 'C', 'D']),
+            // Valid to 0 and 1 in all directions
+            new Tile('imagePath', 10, 10, 1, 0, ['C', 'D', 'A', 'B']),
+            // Valid to 0 to the right and up
+            new Tile('imagePath', 10, 10, 1, 0, ['C', 'B', 'C', 'D']),
+        ]);
+
+        grid.initCellTileOptions();
+
+        const cellAbove = grid.getCell(1, 1);
+        cellAbove.collapseTo(0);
+
+        const cell = grid.getCell(1, 2);
+        // Expect all options to be valid before any update.
+        expect(cell.tileOptions).toEqual([0, 1, 2, 3]);
+
+        grid.updateCellTileOptions(cell);
+
+        // Expect the tile options to be narrowed down to only options
+        // that will connect to the collapsed tile.
+        expect(cell.tileOptions).toEqual([2, 3]);
+
+        const cellRight = grid.getCell(2, 2);
+        cellRight.collapseTo(2);
+
+        grid.updateCellTileOptions(cell);
+
+        // Expect tile options to be just those that can connect to the already
+        // collapsed tiles in 1,1 and 2,2
+        expect(cell.tileOptions).toEqual([3]);
+    });
+
+    test('should only have options that fit to connections on all sides', () => {
+        const cols = 1;
+        const rows = 3;
+        const grid = new WfcGrid(cols, rows, 10, 10, [
+            new Tile('imagePath', 10, 10, 1, 0, ['A', 'B', 'C', 'D']),
+
+            new Tile('imagePath', 10, 10, 1, 0, ['C', 'D', 'B', 'A']),
+
+            new Tile('imagePath', 10, 10, 1, 0, ['B', 'C', 'D', 'A']),
+        ]);
+
+        grid.initCellTileOptions();
+
+        grid.getCell(0, 0).collapseTo(0);
+        grid.getCell(0, 2).collapseTo(2);
+
+        let cell = grid.getCell(0, 1);
+        grid.updateCellTileOptions(cell);
+
+        expect(cell.tileOptions.length).toEqual(1);
+        expect(cell.tileOptions[0]).toBe(1);
+    });
 });

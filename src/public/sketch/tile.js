@@ -29,31 +29,16 @@ class Tile {
     }
 
     draw (x, y) {
+        console.log('drawing tile at position', x, y, this);
         if (this.rotation !== 0) {
             push();
             translate(this.width/2+x, this.height/2+y);
             imageMode(CENTER);
             rotate(PI/180 * this.rotation);
-            if (this.isFlipped) {
-                push();
-                translate(x*this.width, y*this.height);
-                scale(-1, 1);
-                image(this.img, 0, 0, this.width, this.height);
-                pop();
-            } else {
-                image(this.img, 0, 0, this.width, this.height);
-            }
+            image(this.img, 0, 0, this.width, this.height);
             pop();
         } else {
-            if (this.isFlipped) {
-                push();
-                translate(x*this.width, y*this.height);
-                scale(-1, 1);
-                image(this.img, 0, 0, this.width, this.height);
-                pop();
-            } else {
-                image(this.img, 0, 0, this.width, this.height);
-            }
+            image(this.img, x, y, this.width, this.height);
         }
     }
 

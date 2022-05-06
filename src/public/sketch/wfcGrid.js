@@ -32,21 +32,35 @@ class WfcGrid {
     }
 
     draw() {
-        stroke(strokeColor);
-        strokeWeight(weightStroke);
-        fill(gridFill);
-
         this.grid.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 if (cell.chosenTileIndex === null) {
+                    stroke(strokeColor);
+                    strokeWeight(weightStroke);
+                    if (cell.tileOptions.length > 0) {
+                        fill('green');
+                    } else {
+                        fill('red');
+                    }
                     rect(colIndex * this.tileWidth, rowIndex * this.tileHeight,
                         this.tileWidth, this.tileHeight);
+                    push();
+                    strokeWeight(0);
+                    stroke(51);
+                    fill(51);
+                    text(cell.tileOptions.length.toString(), colIndex * this.tileWidth, rowIndex * this.tileHeight + this.tileHeight - 1);
+                    pop();
+
                 } else {
-                    this.tiles[cell.chosenTileIndex].draw(
-                        colIndex * this.tileWidth, rowIndex * this.tileHeight);
+                    const myTile = this.getTile(cell.chosenTileIndex);
+                    myTile.draw(colIndex * this.tileWidth, rowIndex * this.tileHeight);
                 }
             });
         });
+    }
+
+    getTile(index) {
+        return this.tiles[index];
     }
 
     initCellTileOptions() {
@@ -211,7 +225,8 @@ class WfcGrid {
         });
 
         if (smallestCells.length >= 1) {
-            return smallestCells[Math.floor(Math.random() * smallestCells.length)];
+            const returnCell = smallestCells[Math.floor(Math.random() * smallestCells.length)];
+            return returnCell;
         } else {
             return null;
         }
@@ -219,10 +234,15 @@ class WfcGrid {
 
     updateCellTileOptions(cell) {
         let tileOptionList = Array.from({length:this.tiles.length}, (v,i) => i);
-        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.UP, tileOptionList);
-        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.RIGHT, tileOptionList);
-        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.DOWN, tileOptionList);
-        tileOptionList = this.getValidTileOptionsForCell(cell, Direction.LEFT, tileOptionList);
+        tileOptionList =
+            this._getValidTileOptionsForCell(cell, Direction.UP, tileOptionList);
+        tileOptionList =
+            this._getValidTileOptionsForCell(cell, Direction.RIGHT, tileOptionList);
+        tileOptionList =
+            this._getValidTileOptionsForCell(cell, Direction.DOWN, tileOptionList);
+        tileOptionList =
+            this._getValidTileOptionsForCell(cell, Direction.LEFT, tileOptionList);
+
         if (tileOptionList.length === 0) {
             console.error("No valid options for the cell after re-calc", cell);
             cell.tileOptions = [];
@@ -230,7 +250,7 @@ class WfcGrid {
         cell.tileOptions = tileOptionList;
     }
 
-    getValidTileOptionsForCell(cell, direction, currentTileOptions) {
+    _getValidTileOptionsForCell(cell, direction, currentTileOptions) {
 
         const cellCol = cell.column;
         const cellRow = cell.row;
