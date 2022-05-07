@@ -61,7 +61,7 @@ function draw() {
 				}
 				currentCell.collapseTo(option);
 
-				const surroundingCells = getSurroundingCells(currentCell, wfcGrid);
+				const surroundingCells = wfcGrid.getSurroundingCells(currentCell);
 
 				surroundingCells.forEach(cell => {
 					if (cell.status === WfcStatus.OPEN){

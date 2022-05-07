@@ -243,3 +243,34 @@ describe('updateCellTileOptions', () => {
         expect(cell.tileOptions[0]).toBe(1);
     });
 });
+
+describe('getSurroundingCells', () => {
+    test('should get the surrounding cells in the orthogonal directions', () => {
+        const grid = new WfcGrid(3,3,10,10,[]);
+
+        const cell = grid.getCell(1, 1);
+        const returnedArray = grid.getSurroundingCells(cell);
+
+        expect(returnedArray.length).toBe(4);
+    });
+
+    test('should return three options if cell is on one the edge', () => {
+        const grid = new WfcGrid(3,3,10,10,[]);
+
+        let cell = new WfcCell(0,1);
+        let returnedArray = grid.getSurroundingCells(cell);
+        expect(returnedArray.length).toEqual(3);
+
+        cell = new WfcCell(1,0);
+        returnedArray = grid.getSurroundingCells(cell);
+        expect(returnedArray.length).toEqual(3);
+
+        cell = new WfcCell(0,0);
+        returnedArray = grid.getSurroundingCells(cell);
+        expect(returnedArray.length).toEqual(2);
+
+        cell = new WfcCell(2,2);
+        returnedArray = grid.getSurroundingCells(cell);
+        expect(returnedArray.length).toEqual(2);
+    });
+});

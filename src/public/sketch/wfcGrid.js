@@ -321,6 +321,28 @@ class WfcGrid {
 
         return this.grid[row][column];
     }
+
+    getSurroundingCells(cell) {
+        const cells = [];
+    // UP
+    if (cell.row > 0) {
+        cells.push(this.getCell(cell.column, cell.row - 1));
+    }
+    // RIGHT
+    if (cell.column < this.cols - 1) {
+        cells.push(this.getCell(cell.column + 1, cell.row));
+    }
+    // DOWN
+    if (cell.row < this.rows - 1) {
+        cells.push(this.getCell(cell.column, cell.row + 1));
+    }
+    // LEFT
+    if (cell.column > 0) {
+        cells.push(this.getCell(cell.column - 1, cell.row));
+    }
+
+    return cells;
+    }
 }
 
 if (typeof module !== undefined) {
