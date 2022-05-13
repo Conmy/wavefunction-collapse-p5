@@ -244,7 +244,6 @@ class WfcGrid {
             this._getValidTileOptionsForCell(cell, Direction.LEFT, tileOptionList);
 
         if (tileOptionList.length === 0) {
-            console.error("No valid options for the cell after re-calc", cell);
             cell.tileOptions = [];
         }
         cell.tileOptions = tileOptionList;
@@ -266,19 +265,19 @@ class WfcGrid {
             }
             otherRowIndex = cellRow - 1;
         }
-        if (direction === Direction.RIGHT) {
+        else if (direction === Direction.RIGHT) {
             if (cellCol >= this.cols - 1) {
                 return currentTileOptions.slice();
             }
             otherColIndex = cellCol + 1;
         }
-        if (direction === Direction.DOWN) {
+        else if (direction === Direction.DOWN) {
             if (cellRow >= this.rows - 1) {
                 return currentTileOptions.slice();
             }
             otherRowIndex = cellRow + 1;
         }
-        if (direction === Direction.LEFT) {
+        else if (direction === Direction.LEFT) {
             if (cellCol === 0) {
                 return currentTileOptions.slice();
             }
@@ -286,7 +285,7 @@ class WfcGrid {
         }
 
         // Get the cell in the direction for checking.
-        const otherCell = this.grid[otherRowIndex][otherColIndex];
+        const otherCell = this.getCell(otherColIndex, otherRowIndex);
 
         // If the "other" cell is already collapsed, ensure that the current cell options
         // can match to that cell.
@@ -294,8 +293,8 @@ class WfcGrid {
         if (otherCell.status === WfcStatus.COLLAPSED) {
             const otherCellTile = this.tiles[otherCell.chosenTileIndex];
             const stillValidTileIndexes = [];
-            for (let i=0; i<cell.tileOptions.length; i++) {
-                const currentTileIndex = cell.tileOptions[i];
+            for (let i=0; i<currentTileOptions.length; i++) {
+                const currentTileIndex = currentTileOptions[i];
                 const tileUnderTest = this.tiles[currentTileIndex];
                 if (tileUnderTest.canConnect(otherCellTile, direction)) {
                     stillValidTileIndexes.push(currentTileIndex);
@@ -303,10 +302,10 @@ class WfcGrid {
             }
             return stillValidTileIndexes;
         }
-        else {
-            // We have to do something else if there's no tile??
-            // Or just return current tile options??
-        }
+
+        // We have to do something else if there's no tile??
+        // Or just return current tile options??
+
         return currentTileOptions.slice();
 
     }
@@ -324,24 +323,24 @@ class WfcGrid {
 
     getSurroundingCells(cell) {
         const cells = [];
-    // UP
-    if (cell.row > 0) {
-        cells.push(this.getCell(cell.column, cell.row - 1));
-    }
-    // RIGHT
-    if (cell.column < this.cols - 1) {
-        cells.push(this.getCell(cell.column + 1, cell.row));
-    }
-    // DOWN
-    if (cell.row < this.rows - 1) {
-        cells.push(this.getCell(cell.column, cell.row + 1));
-    }
-    // LEFT
-    if (cell.column > 0) {
-        cells.push(this.getCell(cell.column - 1, cell.row));
-    }
+        // UP
+        if (cell.row > 0) {
+            cells.push(this.getCell(cell.column, cell.row - 1));
+        }
+        // RIGHT
+        if (cell.column < this.cols - 1) {
+            cells.push(this.getCell(cell.column + 1, cell.row));
+        }
+        // DOWN
+        if (cell.row < this.rows - 1) {
+            cells.push(this.getCell(cell.column, cell.row + 1));
+        }
+        // LEFT
+        if (cell.column > 0) {
+            cells.push(this.getCell(cell.column - 1, cell.row));
+        }
 
-    return cells;
+        return cells;
     }
 }
 

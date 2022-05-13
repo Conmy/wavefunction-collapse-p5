@@ -43,31 +43,33 @@ test('grid property inside WfcGrid is initialized on contstruction', () => {
     }
 });
 
+describe('calculateAllCellEntropies', () => {
+    test('calls calculateEnthropy on all cells in the grid', () => {
+        const cols = 4;
+        const rows = 3;
+        const grid = new WfcGrid(cols, rows, 10, 10, [1,2,3,4,5]);
 
-test('calculateAllCellEnthropies calls calculateEnthropy on all cells in the grid', () => {
-    const cols = 4;
-    const rows = 3;
-    const grid = new WfcGrid(cols, rows, 10, 10, [1,2,3,4,5]);
+        const cellMock = {
+            calculateEnthropy: jest.fn()
+        };
 
-    const cellMock = {
-        calculateEnthropy: jest.fn()
-    };
+        grid.grid = [
+            [
+                cellMock, cellMock, cellMock, cellMock
+            ],[
+                cellMock, cellMock, cellMock, cellMock
+            ],[
+                cellMock, cellMock, cellMock, cellMock
+            ]
+        ];
 
-    grid.grid = [
-        [
-            cellMock, cellMock, cellMock, cellMock
-        ],[
-            cellMock, cellMock, cellMock, cellMock
-        ],[
-            cellMock, cellMock, cellMock, cellMock
-        ]
-    ];
+        grid.calculateAllCellEnthropies();
 
-    grid.calculateAllCellEnthropies();
+        expect(cellMock.calculateEnthropy.mock.calls.length).toBe(rows*cols);
 
-    expect(cellMock.calculateEnthropy.mock.calls.length).toBe(rows*cols);
-
+    });
 });
+
 
 describe('addTileVariants', () => {
     test('will go through the current list of tiles and' +
@@ -252,25 +254,128 @@ describe('getSurroundingCells', () => {
         const returnedArray = grid.getSurroundingCells(cell);
 
         expect(returnedArray.length).toBe(4);
+        expect(returnedArray[0]).toBeInstanceOf(WfcCell);
+        // UP
+        expect(returnedArray[0].column).toBe(1);
+        expect(returnedArray[0].row).toBe(0);
+        // RIGHT
+        expect(returnedArray[1].column).toBe(2);
+        expect(returnedArray[1].row).toBe(1);
+        // DOWN
+        expect(returnedArray[2].column).toBe(1);
+        expect(returnedArray[2].row).toBe(2);
+        // LEFT
+        expect(returnedArray[3].column).toBe(0);
+        expect(returnedArray[3].row).toBe(1);
     });
 
     test('should return three options if cell is on one the edge', () => {
-        const grid = new WfcGrid(3,3,10,10,[]);
+        const grid = new WfcGrid(3, 3, 10, 10, []);
 
-        let cell = new WfcCell(0,1);
+        let cell = grid.getCell(0, 1);
         let returnedArray = grid.getSurroundingCells(cell);
         expect(returnedArray.length).toEqual(3);
+        // UP
+        expect(returnedArray[0].column).toBe(0);
+        expect(returnedArray[0].row).toBe(0);
+        // RIGHT
+        expect(returnedArray[1].column).toBe(1);
+        expect(returnedArray[1].row).toBe(1);
+        //DOWN
+        expect(returnedArray[2].column).toBe(0);
+        expect(returnedArray[2].row).toBe(2);
 
-        cell = new WfcCell(1,0);
+
+        cell = grid.getCell(1, 0);
         returnedArray = grid.getSurroundingCells(cell);
         expect(returnedArray.length).toEqual(3);
+        // RIGHT
+        expect(returnedArray[0].column).toBe(2);
+        expect(returnedArray[0].row).toBe(0);
+        //DOWN
+        expect(returnedArray[1].column).toBe(1);
+        expect(returnedArray[1].row).toBe(1);
+        //LEFT
+        expect(returnedArray[2].column).toBe(0);
+        expect(returnedArray[2].row).toBe(0);
 
-        cell = new WfcCell(0,0);
+        cell = grid.getCell(2, 1);
         returnedArray = grid.getSurroundingCells(cell);
-        expect(returnedArray.length).toEqual(2);
+        expect(returnedArray.length).toEqual(3);
+        // UP
+        expect(returnedArray[0].column).toBe(2);
+        expect(returnedArray[0].row).toBe(0);
+        //DOWN
+        expect(returnedArray[1].column).toBe(2);
+        expect(returnedArray[1].row).toBe(2);
+        //LEFT
+        expect(returnedArray[2].column).toBe(1);
+        expect(returnedArray[2].row).toBe(1);
+    });
 
-        cell = new WfcCell(2,2);
+    test('should return two options if cell is a corner cell', () => {
+        const grid = new WfcGrid(3,3,10,10,[]);
+
+        let cell = grid.getCell(0,0);
+        let returnedArray = grid.getSurroundingCells(cell);
+        expect(returnedArray.length).toBe(2);
+
+        cell = grid.getCell(2,2);
         returnedArray = grid.getSurroundingCells(cell);
-        expect(returnedArray.length).toEqual(2);
+        expect(returnedArray.length).toBe(2);
+    })
+});
+
+describe('updateCellTileOptions', () => {
+    test('should update the cell tileOptions to a subset of the tiles that can ' +
+    'connect to the collapsed neighbours', () => {
+        const grid = new WfcGrid(3, 3, 10, 10, [
+            new Tile('ImagePath', 10, 10, 1, 0, ['A', 'A', 'A', 'B']),
+            new Tile('ImagePath', 10, 10, 1, 0, ['B', 'A', 'B', 'B']),
+            new Tile('ImagePath', 10, 10, 1, 0, ['B', 'B', 'A', 'B']),
+
+            new Tile('ImagePath', 10, 10, 1, 0, ['B', 'B', 'B', 'B']),
+            new Tile('ImagePath', 10, 10, 1, 0, ['A', 'B', 'B', 'A'])
+        ]);
+
+        grid.initCellTileOptions();
+
+        let cell = grid.getCell(0, 0);
+        cell.collapseTo(0);
+        cell = grid.getCell(1, 1);
+        cell.collapseTo(1);
+        cell = grid.getCell(0, 2);
+        cell.collapseTo(2);
+
+        cell = grid.getCell(0, 1);
+        grid.updateCellTileOptions(cell);
+
+
+
+    });
+
+    test('should update the cell tileOptions to an empty array if there are' +
+    'no valid options available', () => {
+        const grid = new WfcGrid(3, 3, 10, 10, [
+            new Tile('ImagePath', 10, 10, 1, 0, ['A', 'A', 'A', 'B']),
+            new Tile('ImagePath', 10, 10, 1, 0, ['B', 'A', 'B', 'B']),
+            new Tile('ImagePath', 10, 10, 1, 0, ['B', 'B', 'A', 'B']),
+
+            new Tile('ImagePath', 10, 10, 1, 0, ['B', 'B', 'B', 'B']),
+        ]);
+
+        grid.initCellTileOptions();
+
+        let cell = grid.getCell(0, 0);
+        cell.collapseTo(0);
+        cell = grid.getCell(1, 1);
+        cell.collapseTo(1);
+        cell = grid.getCell(0, 2);
+        cell.collapseTo(2);
+
+        cell = grid.getCell(0, 1);
+        grid.updateCellTileOptions(cell);
+
+        expect(cell.tileOptions.length).toBe(0);
     });
 });

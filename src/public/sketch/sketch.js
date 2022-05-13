@@ -2,14 +2,18 @@ let canvas;
 let wfcGrid;
 let roadButton;
 let stepButton;
+let rerunButton;
+
+let history = [];
+let logHistory = true;
 
 let stepMode = false;
 let redraw = false;
 
 let continueWfcAlgorithm; // CircuitBreaker boolean for draw loop
 
-const numColumns = 3;
-const numRows = 3;
+const numColumns = 10;
+const numRows = 10;
 const tileWidth = 30;
 const tileHeight = 30;
 
@@ -24,13 +28,19 @@ function setup() {
 	roadButton.mousePressed(loadRoadTiles);
 	roadButton.parent('buttonContainer');
 
-	stepButton = createButton('Step Mode');
-	stepButton.mousePressed(toggleStepMode);
+	stepButton = createRadio();
+	stepButton.option('1','Step Mode');
+	stepButton.option('2', 'Normal Mode');
+	stepButton.selected('2');
 	stepButton.parent('buttonContainer');
 
 	drawButton = createButton('Draw');
 	drawButton.mousePressed(reDraw);
 	drawButton.parent('buttonContainer');
+
+	rerunButton = createButton('Re-run');
+	rerunButton.mousePressed(rerunGrid);
+	rerunButton.parent('buttonContainer');
 
 	canvas = createCanvas(tileWidth * numColumns, tileHeight * numRows);
 	canvas.parent('sketchContainer');
@@ -38,15 +48,22 @@ function setup() {
 }
 
 function draw() {
-	if (stepMode && !redraw) {
+	let mode = stepButton.value();
+
+	if (mode === '1') {
+		drawButton.show();
+	} else if (mode === '2') {
+		drawButton.hide();
+	}
+
+	if (mode === '1' && !redraw) {
 		return;
 	}
 
-	if (!stepMode || (stepMode && redraw)){
-
+	if (mode === '2' || (mode === '1' && redraw)){
 		if (continueWfcAlgorithm) {
 			if (wfcGrid) {
-
+				currentCell = wfcGrid.getCellOfLeastEnthropy();
 				if (currentCell === null) {
 					console.log('no cell found with enthropy. Stopping the algorithm.');
 					continueWfcAlgorithm = false;
@@ -60,6 +77,10 @@ function draw() {
 					return;
 				}
 				currentCell.collapseTo(option);
+				history.push({
+					"cell": currentCell,
+					"tile": wfcGrid.tiles[option],
+				});
 
 				const surroundingCells = wfcGrid.getSurroundingCells(currentCell);
 
@@ -72,11 +93,18 @@ function draw() {
 
 				wfcGrid.draw();
 
-				currentCell = wfcGrid.getCellOfLeastEnthropy();
+			}
+		}
+		else {
+			// Stopped the algorithm
+			if (logHistory) {
+				console.log('Stopped the algorithm', history);
+				logHistory = !logHistory;
 			}
 		}
 
-		if (stepMode) redraw = false;
+		if (mode === 'Step Mode')
+			redraw = false;
 	}
 }
 
@@ -100,8 +128,6 @@ function loadRoadTiles() {
 	// NOTE: This stuff will live in the draw method in the end.
 	// calculate all the enthropy values
 	wfcGrid.calculateAllCellEnthropies();
-
-	currentCell = wfcGrid.getCellOfLeastEnthropy();
 }
 
 // function loadTronTiles() {
@@ -147,4 +173,20 @@ function chooseCellTileOption(tileOptions) {
 	}
 	const tileOptionIndex = Math.floor(Math.random() * tileOptions.length)
 	return tileOptions[tileOptionIndex];
+}
+
+function rerunGrid() {
+	wfcGrid._initGrid();
+
+	// first time setup of the tile options.
+	wfcGrid.initCellTileOptions();
+
+	// NOTE: This stuff will live in the draw method in the end.
+	// calculate all the enthropy values
+	wfcGrid.calculateAllCellEnthropies();
+	currentCell = null;
+	redraw = false;
+	continueWfcAlgorithm = true;
+	history = new Array();
+	logHistory = true;
 }

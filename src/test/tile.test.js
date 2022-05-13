@@ -27,10 +27,10 @@ test('Direction.opposite can return the opposite direction.', () => {
 test('getConnector returns the corresponding connector', () => {
     const tile = new Tile('tiles/1.png', 20, 20, 1, 0, ['A', 'B', 'C', 'D']);
 
-    expect(tile.getConnector(0)).toBe('A');
-    expect(tile.getConnector(1)).toBe('B');
-    expect(tile.getConnector(2)).toBe('C');
-    expect(tile.getConnector(3)).toBe('D');
+    expect(tile.getConnector(0)).toBe('A'); // UP
+    expect(tile.getConnector(1)).toBe('B'); // RIGHT
+    expect(tile.getConnector(2)).toBe('C'); // DOWN
+    expect(tile.getConnector(3)).toBe('D'); // LEFT
 
 });
 
@@ -86,13 +86,17 @@ test('rotated90 does not change the original tile properties', () => {
     const inTile = new Tile('HelloWorld', 20, 15, 1, 0, ['A','B', 'C', 'D']);
 
     const outTile = inTile.rotated90();
-    outTile.connectors[0] = 'G';
 
     expect(inTile.connectors.length).toBe(4);
     expect(inTile.getConnector(0)).toBe('A');
     expect(inTile.getConnector(1)).toBe('B');
     expect(inTile.getConnector(2)).toBe('C');
     expect(inTile.getConnector(3)).toBe('D');
+
+    expect(outTile.getConnector(0)).toBe('B');
+    expect(outTile.getConnector(1)).toBe('C');
+    expect(outTile.getConnector(2)).toBe('D');
+    expect(outTile.getConnector(3)).toBe('A');
 });
 
 test('load will call the p5 loadImage function which is assumed in the global ' +
@@ -214,5 +218,24 @@ describe('Asymetrical tiles', () => {
         expect(tile.canConnect(flippedNonMatchingTile, Direction.RIGHT)).toBe(false);
         expect(tile.canConnect(flippedNonMatchingTile, Direction.DOWN)).toBe(false);
         expect(tile.canConnect(flippedNonMatchingTile, Direction.LEFT)).toBe(false);
+    });
+});
+
+describe('canConnect', () => {
+    test('should return false when sides are not able to connect', () => {
+        const tileOnTop = new Tile('ImagePath', 10, 10, 1, 0, ['A', 'A', 'A', 'B']);
+        const tileToRight = new Tile('ImagePath', 10, 10, 1, 0, ['B', 'A', 'B', 'B']);
+        const tileToBottom = new Tile('ImagePath', 10, 10, 1, 0, ['B', 'B', 'A', 'B']);
+
+        const tile = new Tile('ImagePath', 10, 10, 1, 0, ['B', 'B', 'B', 'B']);
+
+        let connectable = tile.canConnect(tileOnTop, Direction.UP);
+        expect(connectable).toBe(false);
+
+        connectable = tile.canConnect(tileToRight, Direction.RIGHT);
+        expect(connectable).toBe(true);
+
+        connectable = tile.canConnect(tileToBottom, Direction.DOWN);
+        expect(connectable).toBe(true);
     });
 });
