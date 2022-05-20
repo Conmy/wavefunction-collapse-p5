@@ -34,7 +34,7 @@ class WfcGrid {
     draw() {
         this.grid.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
-                if (cell.chosenTileIndex === null) {
+                if (!cell.chosenTileIndex) {
                     stroke(strokeColor);
                     strokeWeight(weightStroke);
                     if (cell.tileOptions.length > 0) {

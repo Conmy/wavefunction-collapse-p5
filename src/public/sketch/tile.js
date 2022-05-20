@@ -29,7 +29,7 @@ class Tile {
     }
 
     draw (x, y) {
-        console.log('drawing tile at position', x, y, this);
+        // console.log('drawing tile at position', x, y, this);
         if (this.rotation !== 0) {
             push();
             translate(this.width/2+x, this.height/2+y);

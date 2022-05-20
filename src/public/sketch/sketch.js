@@ -1,19 +1,22 @@
 let canvas;
 let wfcGrid;
 let roadButton;
-let stepButton;
+let scifiButton;
+let circuitButton;
+let doStepAlgoButton;
+let stepRadioButtons;
 let rerunButton;
 
 let history = [];
 let logHistory = true;
 
 let stepMode = false;
-let redraw = false;
+let doStep = false;
 
 let continueWfcAlgorithm; // CircuitBreaker boolean for draw loop
 
-const numColumns = 10;
-const numRows = 10;
+const numColumns = 30;
+const numRows = 30;
 const tileWidth = 30;
 const tileHeight = 30;
 
@@ -28,15 +31,19 @@ function setup() {
 	roadButton.mousePressed(loadRoadTiles);
 	roadButton.parent('buttonContainer');
 
-	stepButton = createRadio();
-	stepButton.option('1','Step Mode');
-	stepButton.option('2', 'Normal Mode');
-	stepButton.selected('2');
-	stepButton.parent('buttonContainer');
+	circuitButton = createButton('Use Circuit Tiles');
+	circuitButton.mousePressed(loadCircuitTiles);
+	circuitButton.parent('buttonContainer');
 
-	drawButton = createButton('Draw');
-	drawButton.mousePressed(reDraw);
-	drawButton.parent('buttonContainer');
+	stepRadioButtons = createRadio();
+	stepRadioButtons.option('1','Step Mode');
+	stepRadioButtons.option('2', 'Normal Mode');
+	stepRadioButtons.selected('2');
+	stepRadioButtons.parent('buttonContainer');
+
+	doStepAlgoButton = createButton('Step');
+	doStepAlgoButton.mousePressed(enableStep);
+	doStepAlgoButton.parent('buttonContainer');
 
 	rerunButton = createButton('Re-run');
 	rerunButton.mousePressed(rerunGrid);
@@ -48,63 +55,56 @@ function setup() {
 }
 
 function draw() {
-	let mode = stepButton.value();
 
+	// Housekeeping...
+	let mode = stepRadioButtons.value();
 	if (mode === '1') {
-		drawButton.show();
+		doStepAlgoButton.show();
 	} else if (mode === '2') {
-		drawButton.hide();
+		doStepAlgoButton.hide();
 	}
 
-	if (mode === '1' && !redraw) {
-		return;
+	// ---------- Iterate Algorithm ----------
+	if (continueWfcAlgorithm){
+		if (mode === '1' && doStep === true) {
+			doAlgorithmStep();
+			doStep = false;
+		}
+		else if (mode === '2' && wfcGrid) {
+			doAlgorithmStep();
+		}
 	}
 
-	if (mode === '2' || (mode === '1' && redraw)){
-		if (continueWfcAlgorithm) {
-			if (wfcGrid) {
-				currentCell = wfcGrid.getCellOfLeastEnthropy();
-				if (currentCell === null) {
-					console.log('no cell found with enthropy. Stopping the algorithm.');
-					continueWfcAlgorithm = false;
-					return;
-				}
+	// Draw the current Grid
+	if (wfcGrid) wfcGrid.draw();
 
-				const option = chooseCellTileOption(currentCell.tileOptions);
-				if (option === null) {
-					console.log('No tile option available on the chosen tile. Stopping.');
-					continueWfcAlgorithm = false;
-					return;
-				}
-				currentCell.collapseTo(option);
-				history.push({
-					"cell": currentCell,
-					"tile": wfcGrid.tiles[option],
-				});
+}
 
-				const surroundingCells = wfcGrid.getSurroundingCells(currentCell);
-
-				surroundingCells.forEach(cell => {
-					if (cell.status === WfcStatus.OPEN){
-						wfcGrid.updateCellTileOptions(cell);
-						cell.calculateEnthropy(wfcGrid.tiles);
-					}
-				});
-
-				wfcGrid.draw();
-
-			}
+function doAlgorithmStep() {
+	currentCell = wfcGrid.getCellOfLeastEnthropy();
+	if (!currentCell) {
+		console.log('no cell found with enthropy. Stopping the algorithm.');
+		continueWfcAlgorithm = false;
+	}
+	else {
+		const option = chooseCellTileOption(currentCell.tileOptions);
+		if (!option) {
+			console.log('No tile option available on the chosen tile. Stopping.');
 		}
 		else {
-			// Stopped the algorithm
-			if (logHistory) {
-				console.log('Stopped the algorithm', history);
-				logHistory = !logHistory;
-			}
+			currentCell.collapseTo(option);
+			history.push({
+				"cell": currentCell,
+				"tile": wfcGrid.tiles[option],
+			});
+			const surroundingCells = wfcGrid.getSurroundingCells(currentCell);
+			surroundingCells.forEach(cell => {
+				if (cell.status === WfcStatus.OPEN){
+					wfcGrid.updateCellTileOptions(cell);
+					cell.calculateEnthropy(wfcGrid.tiles);
+				}
+			});
 		}
-
-		if (mode === 'Step Mode')
-			redraw = false;
 	}
 }
 
@@ -130,40 +130,65 @@ function loadRoadTiles() {
 	wfcGrid.calculateAllCellEnthropies();
 }
 
-// function loadTronTiles() {
-// 	// Create a WfcGrid for space tiles.
-// 	wfcGrid = new WfcGrid(numColumns, numRows, tileWidth, tileHeight, [
-// 		// Create the tiles here.
-// 		new Tile('tiles/TronLike/AAAA_Blank.PNG', tileWidth, tileHeight, 1, 0, ['A','A','A','A']),
-// 		new Tile('tiles/TronLike/AADE_MachineCorner.PNG', tileWidth, tileHeight, 1, 0, ['A','A','D','E']),
-// 		new Tile('tiles/TronLike/ABAA_BrokenMachine.PNG', tileWidth, tileHeight, 1, 0, ['A','B','A','A']),
-// 		new Tile('tiles/TronLike/ABAC_CapStop.PNG', tileWidth, tileHeight, 1, 0, ['A','B','A','C']),
-// 		new Tile('tiles/TronLike/ACAC_LineContinue.PNG', tileWidth, tileHeight, 1, 0, ['A','C','A','C']),
-// 		new Tile('tiles/TronLike/CCAA_SideLine_or_GGAA.PNG', tileWidth, tileHeight, 1, 0, ['G','G','A','A']),
-// 		new Tile('tiles/TronLike/CCAC_LineThreeConnectors.PNG', tileWidth, tileHeight, 1, 0, ['C','C','A','C']),
-// 		new Tile('tiles/TronLike/CCCC_LineAllCross.PNG', tileWidth, tileHeight, 1, 0, ['C','C','C','C']),
-// 		new Tile('tiles/TronLike/CCCC_LineAllSideways_or_GGGG.PNG', tileWidth, tileHeight, 1, 0, ['G','G','G','G']),
-// 		new Tile('tiles/TronLike/CCDE_MachineCornerWithLine_or_GGDE.PNG', tileWidth, tileHeight, 1, 0, ['G','G','D','E']),
-// 		new Tile('tiles/TronLike/DBEF_CapMachine.PNG', tileWidth, tileHeight, 1, 0, ['D','B','E','F']),
-// 		new Tile('tiles/TronLike/FFFF_MachineBlank.PNG', tileWidth, tileHeight, 1, 0, ['F','F','F','F'])
-// 	]);
+function loadCircuitTiles() {
+	wfcGrid = new WfcGrid(numColumns, numRows, tileWidth, tileHeight, [
+		new Tile('tiles/circuit/0.png', tileWidth, tileHeight, 1, 0, ['A','A','A','A',]),
+		new Tile('tiles/circuit/1.png', tileWidth, tileHeight, 1, 0, ['B','B','B','B',]),
+		new Tile('tiles/circuit/2.png', tileWidth, tileHeight, 1, 0, ['B','C','B','B',]),
+		new Tile('tiles/circuit/3.png', tileWidth, tileHeight, 1, 0, ['B','D','B','D',]),
+		// new Tile('tiles/circuit/4.png', tileWidth, tileHeight, 1, 0, ['Ea','C','Ef','A',]),
+		// new Tile('tiles/circuit/5.png', tileWidth, tileHeight, 1, 0, ['Ea','B','B','Ef',]),
+		new Tile('tiles/circuit/6.png', tileWidth, tileHeight, 1, 0, ['B','C','B','C',]),
+		new Tile('tiles/circuit/7.png', tileWidth, tileHeight, 1, 0, ['D','C','D','C',]),
+		new Tile('tiles/circuit/8.png', tileWidth, tileHeight, 1, 0, ['D','B','C','B',]),
+		new Tile('tiles/circuit/9.png', tileWidth, tileHeight, 1, 0, ['C','C','B','C',]),
+		new Tile('tiles/circuit/10.png', tileWidth, tileHeight, 1, 0, ['C','C','C','C',]),
+		new Tile('tiles/circuit/11.png', tileWidth, tileHeight, 1, 0, ['C','C','B','B',]),
+		new Tile('tiles/circuit/12.png', tileWidth, tileHeight, 1, 0, ['B','C','B','C',]),
+	]);
 
-// 	wfcGrid.addTileVariants();
-// 	wfcGrid.load();
-// 	// first time setup of the tile options.
-// 	wfcGrid.initCellTileOptions();
+	wfcGrid.addTileVariants();
+	wfcGrid.load();
+	// first time setup of the tile options.
+	wfcGrid.initCellTileOptions();
 
-// 	// NOTE: This stuff will live in the draw method in the end.
-// 	// calculate all the enthropy values
-// 	wfcGrid.calculateAllCellEnthropies();
-// }
+	// NOTE: This stuff will live in the draw method in the end.
+	// calculate all the enthropy values
+	wfcGrid.calculateAllCellEnthropies();
+}
+
+function loadSciFiTiles() {
+	wfcGrid = new WfcGrid(numColumns, numRows, tileWidth, tileHeight, [
+		new Tile('tiles/sci-fi/AAAE_MachineWindow.PNG', tileWidth, tileHeight, 1, 0, ['A','A','A','E',]),
+		new Tile('tiles/sci-fi/AADfDa_MachineCorner.PNG', tileWidth, tileHeight, 1, 0, ['A','A','Df','Da',]),
+		new Tile('tiles/sci-fi/ABAA_BrokenMachine.PNG', tileWidth, tileHeight, 1, 0, ['A','B','A','A',]),
+		new Tile('tiles/sci-fi/ABAC_CapStop.PNG', tileWidth, tileHeight, 1, 0, ['A','B','A','C',]),
+		new Tile('tiles/sci-fi/ACAC_LineContinue.PNG', tileWidth, tileHeight, 1, 0, ['A','C','A','C',]),
+		new Tile('tiles/sci-fi/CCAA_SideLine_or_GGAA.PNG', tileWidth, tileHeight, 1, 0, ['C','C','A','A',]),
+		new Tile('tiles/sci-fi/CCAC_LineThreeConnectors.PNG', tileWidth, tileHeight, 1, 0, ['C','C','A','C',]),
+		new Tile('tiles/sci-fi/CCCC_LineAllCross.PNG', tileWidth, tileHeight, 1, 0, ['C','C','C','C',]),
+		new Tile('tiles/sci-fi/CCCC_LineAllSideways_or_GGGG.PNG', tileWidth, tileHeight, 1, 0, ['C','C','C','C',]),
+		new Tile('tiles/sci-fi/CCDfDa_MachineCornerWithLine.PNG', tileWidth, tileHeight, 1, 0, ['C','C','Df','Da',]),
+		new Tile('tiles/sci-fi/DaBDfE_CapMachine.PNG', tileWidth, tileHeight, 1, 0, ['Da','B','Df','E',]),
+		new Tile('tiles/sci-fi/EEEE_MachineBlank.PNG', tileWidth, tileHeight, 1, 0, ['E','E','E','E',]),
+	]);
+
+	wfcGrid.addTileVariants();
+	wfcGrid.load();
+	// first time setup of the tile options.
+	wfcGrid.initCellTileOptions();
+
+	// NOTE: This stuff will live in the draw method in the end.
+	// calculate all the enthropy values
+	wfcGrid.calculateAllCellEnthropies();
+}
 
 function toggleStepMode() {
 	stepMode = !stepMode;
 }
 
-function reDraw() {
-	redraw = true;
+function enableStep() {
+	doStep = true;
 }
 
 function chooseCellTileOption(tileOptions) {
@@ -171,8 +196,12 @@ function chooseCellTileOption(tileOptions) {
 	if (tileOptions.length === 1) {
 		return tileOptions[0];
 	}
-	const tileOptionIndex = Math.floor(Math.random() * tileOptions.length)
-	return tileOptions[tileOptionIndex];
+	else if(tileOptions.length > 1) {
+		const tileOptionIndex = Math.floor(Math.random() * tileOptions.length)
+		return tileOptions[tileOptionIndex];
+	}
+	console.log('Could not extract a tileOption from', tileOptions);
+	return null;
 }
 
 function rerunGrid() {
@@ -185,7 +214,7 @@ function rerunGrid() {
 	// calculate all the enthropy values
 	wfcGrid.calculateAllCellEnthropies();
 	currentCell = null;
-	redraw = false;
+	doStep = false;
 	continueWfcAlgorithm = true;
 	history = new Array();
 	logHistory = true;

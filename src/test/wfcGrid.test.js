@@ -350,7 +350,7 @@ describe('updateCellTileOptions', () => {
         cell = grid.getCell(0, 1);
         grid.updateCellTileOptions(cell);
 
-
+        expect(cell.tileOptions).toHaveLength(1);
 
     });
 
@@ -376,6 +376,6 @@ describe('updateCellTileOptions', () => {
         cell = grid.getCell(0, 1);
         grid.updateCellTileOptions(cell);
 
-        expect(cell.tileOptions.length).toBe(0);
+        expect(cell.tileOptions).toHaveLength(0);
     });
 });
