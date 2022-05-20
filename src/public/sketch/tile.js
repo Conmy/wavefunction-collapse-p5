@@ -97,14 +97,14 @@ class Tile {
             || this.connectorIsAsymetrical(Direction.LEFT)
             || this.connectorIsAsymetrical(Direction.DOWN);
 
-        if (hasAsymmetry) {
-            newVariants.push(
-                this.getFlipped(),
-                rotated90.getFlipped(),
-                rotated180.getFlipped(),
-                rotated270.getFlipped()
-            );
-        }
+        // if (hasAsymmetry) {
+        //     newVariants.push(
+        //         this.getFlipped(),
+        //         rotated90.getFlipped(),
+        //         rotated180.getFlipped(),
+        //         rotated270.getFlipped()
+        //     );
+        // }
 
         return newVariants;
     }

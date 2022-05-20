@@ -132,12 +132,12 @@ function loadRoadTiles() {
 
 function loadCircuitTiles() {
 	wfcGrid = new WfcGrid(numColumns, numRows, tileWidth, tileHeight, [
-		new Tile('tiles/circuit/0.png', tileWidth, tileHeight, 1, 0, ['A','A','A','A',]),
+		new Tile('tiles/circuit/0.png', tileWidth, tileHeight, 3, 0, ['A','A','A','A',]),
 		new Tile('tiles/circuit/1.png', tileWidth, tileHeight, 1, 0, ['B','B','B','B',]),
 		new Tile('tiles/circuit/2.png', tileWidth, tileHeight, 1, 0, ['B','C','B','B',]),
 		new Tile('tiles/circuit/3.png', tileWidth, tileHeight, 1, 0, ['B','D','B','D',]),
-		// new Tile('tiles/circuit/4.png', tileWidth, tileHeight, 1, 0, ['Ea','C','Ef','A',]),
-		// new Tile('tiles/circuit/5.png', tileWidth, tileHeight, 1, 0, ['Ea','B','B','Ef',]),
+		new Tile('tiles/circuit/4.png', tileWidth, tileHeight, 9, 0, ['Ea','C','Ef','A',]),
+		new Tile('tiles/circuit/5.png', tileWidth, tileHeight, 1, 0, ['Ea','B','B','Ef',]),
 		new Tile('tiles/circuit/6.png', tileWidth, tileHeight, 1, 0, ['B','C','B','C',]),
 		new Tile('tiles/circuit/7.png', tileWidth, tileHeight, 1, 0, ['D','C','D','C',]),
 		new Tile('tiles/circuit/8.png', tileWidth, tileHeight, 1, 0, ['D','B','C','B',]),
@@ -197,10 +197,20 @@ function chooseCellTileOption(tileOptions) {
 		return tileOptions[0];
 	}
 	else if(tileOptions.length > 1) {
-		const tileOptionIndex = Math.floor(Math.random() * tileOptions.length)
-		return tileOptions[tileOptionIndex];
+		const denom = tileOptions.reduce((prevValue, currVal) => {
+			return prevValue + wfcGrid.tiles[currVal].weight;
+		}, 0);
+		let lowerBound = 0;
+		const randomNum = Math.random();
+		for (let i=0; i<tileOptions.length; i++) {
+			const frac = lowerBound + (wfcGrid.tiles[tileOptions[i]].weight / denom);
+			if (randomNum > lowerBound && randomNum <= frac) {
+				return tileOptions[i];
+			}
+			lowerBound += frac;
+		}
 	}
-	console.log('Could not extract a tileOption from', tileOptions);
+
 	return null;
 }
 

@@ -156,24 +156,6 @@ describe('Asymetrical tiles', () => {
         expect(flippedTile.isFlipped).toBe(true);
     });
 
-    test("getTileVariants creates flipped tiles when there's an asymetrical " +
-    'connector present', () => {
-        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['Aa', 'B', 'C', 'D']);
-
-        const tileVariants = tile.getTileVariants();
-
-        expect(tileVariants.length).toBe(7);
-    });
-
-    test("The number of asymetrical connectors doesn't matter as long as " +
-    "there's one, we expect more variants.", () => {
-        const tile = new Tile('ImagePath', 5, 5, 1, 0, ['Aa', 'Ba', 'C', 'D']);
-
-        const tileVariants = tile.getTileVariants();
-
-        expect(tileVariants.length).toBe(7);
-    });
-
     test("connectorIsAsymetrical returns true if the connector ends in 'a'", () => {
         const tile = new Tile('imagePath', 5, 5, 1, 0, ['A', 'B', 'C', 'D']);
         const asymTile = new Tile('imagePath', 5, 5, 1, 0, ['Aa', 'Ba', 'Ca', 'Da'], false);
