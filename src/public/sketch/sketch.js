@@ -1,3 +1,4 @@
+// ========== Globally available objects relevant to the sketch.
 let canvas;
 let wfcGrid;
 let roadButton;
@@ -7,20 +8,23 @@ let doStepAlgoButton;
 let stepRadioButtons;
 let rerunButton;
 
+// ========== State-based memory of the sketch as it runs.
+let currentCell;
+let nextCell;
 let history = [];
 let logHistory = true;
-
+let collapsedCells = [];
+// ==================== workflow variables for controlling what happens next.
 let stepMode = false;
 let doStep = false;
+let continueWfcAlgorithm = true; // CircuitBreaker boolean for draw loop
 
-let continueWfcAlgorithm; // CircuitBreaker boolean for draw loop
-
+// ========== Static variables relevant to the creation of the sketch.
 const numColumns = 30;
 const numRows = 30;
 const tileWidth = 30;
 const tileHeight = 30;
 
-let  currentCell;
 
 function setup() {
 
@@ -51,13 +55,12 @@ function setup() {
 
 	canvas = createCanvas(tileWidth * numColumns, tileHeight * numRows);
 	canvas.parent('sketchContainer');
-	continueWfcAlgorithm = true;
 }
 
 function draw() {
 
 	// Housekeeping...
-	let mode = stepRadioButtons.value();
+	const mode = stepRadioButtons.value();
 	if (mode === '1') {
 		doStepAlgoButton.show();
 	} else if (mode === '2') {
@@ -75,18 +78,55 @@ function draw() {
 		}
 	}
 
-	// Draw the current Grid
+	// Draw the current Grid (if there is one).
 	if (wfcGrid) wfcGrid.draw();
+	if (nextCell) {
+		push();
+			noFill();
+			strokeWeight(4);
+			stroke(155, 0, 0);
+			rect(nextCell.column * tileWidth, nextCell.row * tileHeight, tileWidth, tileHeight);
+		pop();
+	}
 
 }
 
 function doAlgorithmStep() {
-	currentCell = wfcGrid.getCellOfLeastEnthropy();
+	if(!nextCell)
+		currentCell = wfcGrid.getCellOfLeastEntropy();
+	else
+		currentCell = nextCell;
 	if (!currentCell) {
-		console.log('no cell found with enthropy. Stopping the algorithm.');
+		console.log('no cell found with entropy. Stopping the algorithm.');
 		continueWfcAlgorithm = false;
 	}
 	else {
+		// If there's no tileOptions, do some re-configuring nearby
+		if (currentCell.tileOptions.length === 0) {
+
+			// Choose one of the collapsed neighbours to stay collapsed and delete the others?
+
+			// Get neighbours
+			const neighbours = wfcGrid.getSurroundingCells(currentCell);
+			const collapsedNeighbours = neighbours.filter((curr) => {
+				return curr.status === WfcStatus.COLLAPSED;
+			});
+
+			const highestEntropyCells = getHighestEntropyCellInArray(collapsedNeighbours);
+
+			const highestEntropyCell = highestEntropyCells[0];
+			collapsedNeighbours.forEach(currCell => {
+				if (!currCell.equals(highestEntropyCell)) {
+					currCell.open();
+				}
+			});
+			[...collapsedNeighbours, currentCell].forEach((cell) => {
+				wfcGrid.updateCellTileOptions(cell);
+				cell.calculateEntropy(wfcGrid.tiles);
+			});
+			return;
+		}
+
 		const option = chooseCellTileOption(currentCell.tileOptions);
 		if (!option) {
 			console.log('No tile option available on the chosen tile. Stopping.');
@@ -101,11 +141,13 @@ function doAlgorithmStep() {
 			surroundingCells.forEach(cell => {
 				if (cell.status === WfcStatus.OPEN){
 					wfcGrid.updateCellTileOptions(cell);
-					cell.calculateEnthropy(wfcGrid.tiles);
+					cell.calculateEntropy(wfcGrid.tiles);
 				}
 			});
 		}
 	}
+
+	nextCell = wfcGrid.getCellOfLeastEntropy();
 }
 
 function loadRoadTiles() {
@@ -126,22 +168,22 @@ function loadRoadTiles() {
 	wfcGrid.initCellTileOptions();
 
 	// NOTE: This stuff will live in the draw method in the end.
-	// calculate all the enthropy values
+	// calculate all the entropy values
 	wfcGrid.calculateAllCellEnthropies();
 }
 
 function loadCircuitTiles() {
 	wfcGrid = new WfcGrid(numColumns, numRows, tileWidth, tileHeight, [
-		new Tile('tiles/circuit/0.png', tileWidth, tileHeight, 3, 0, ['A','A','A','A',]),
+		new Tile('tiles/circuit/0.png', tileWidth, tileHeight, 12, 0, ['A','A','A','A',]),
 		new Tile('tiles/circuit/1.png', tileWidth, tileHeight, 1, 0, ['B','B','B','B',]),
 		new Tile('tiles/circuit/2.png', tileWidth, tileHeight, 1, 0, ['B','C','B','B',]),
 		new Tile('tiles/circuit/3.png', tileWidth, tileHeight, 1, 0, ['B','D','B','D',]),
-		new Tile('tiles/circuit/4.png', tileWidth, tileHeight, 9, 0, ['Ea','C','Ef','A',]),
-		new Tile('tiles/circuit/5.png', tileWidth, tileHeight, 1, 0, ['Ea','B','B','Ef',]),
+		new Tile('tiles/circuit/4.png', tileWidth, tileHeight, 11, 0, ['Ea','C','Ef','A',]),
+		new Tile('tiles/circuit/5.png', tileWidth, tileHeight, 4, 0, ['Ea','B','B','Ef',]),
 		new Tile('tiles/circuit/6.png', tileWidth, tileHeight, 1, 0, ['B','C','B','C',]),
 		new Tile('tiles/circuit/7.png', tileWidth, tileHeight, 1, 0, ['D','C','D','C',]),
 		new Tile('tiles/circuit/8.png', tileWidth, tileHeight, 1, 0, ['D','B','C','B',]),
-		new Tile('tiles/circuit/9.png', tileWidth, tileHeight, 1, 0, ['C','C','B','C',]),
+		new Tile('tiles/circuit/9.png', tileWidth, tileHeight, 6, 0, ['C','C','B','C',]),
 		new Tile('tiles/circuit/10.png', tileWidth, tileHeight, 1, 0, ['C','C','C','C',]),
 		new Tile('tiles/circuit/11.png', tileWidth, tileHeight, 1, 0, ['C','C','B','B',]),
 		new Tile('tiles/circuit/12.png', tileWidth, tileHeight, 1, 0, ['B','C','B','C',]),
@@ -153,7 +195,7 @@ function loadCircuitTiles() {
 	wfcGrid.initCellTileOptions();
 
 	// NOTE: This stuff will live in the draw method in the end.
-	// calculate all the enthropy values
+	// calculate all the entropy values
 	wfcGrid.calculateAllCellEnthropies();
 }
 
@@ -179,7 +221,7 @@ function loadSciFiTiles() {
 	wfcGrid.initCellTileOptions();
 
 	// NOTE: This stuff will live in the draw method in the end.
-	// calculate all the enthropy values
+	// calculate all the entropy values
 	wfcGrid.calculateAllCellEnthropies();
 }
 
@@ -198,17 +240,16 @@ function chooseCellTileOption(tileOptions) {
 	}
 	else if(tileOptions.length > 1) {
 		const denom = tileOptions.reduce((prevValue, currVal) => {
-			return prevValue + wfcGrid.tiles[currVal].weight;
+			return prevValue + wfcGrid.getTile(currVal).weight;
 		}, 0);
 		let lowerBound = 0;
 		const randomNum = Math.random();
-		for (let i=0; i<tileOptions.length; i++) {
-			const frac = lowerBound + (wfcGrid.tiles[tileOptions[i]].weight / denom);
-			if (randomNum > lowerBound && randomNum <= frac) {
-				return tileOptions[i];
-			}
+		const chosenOption = tileOptions.find(option => {
+			const frac = lowerBound + (wfcGrid.getTile(option).weight / denom);
 			lowerBound += frac;
-		}
+			return randomNum <= frac;
+		});
+		return chosenOption;
 	}
 
 	return null;
@@ -221,11 +262,43 @@ function rerunGrid() {
 	wfcGrid.initCellTileOptions();
 
 	// NOTE: This stuff will live in the draw method in the end.
-	// calculate all the enthropy values
+	// calculate all the entropy values
 	wfcGrid.calculateAllCellEnthropies();
 	currentCell = null;
 	doStep = false;
 	continueWfcAlgorithm = true;
 	history = new Array();
 	logHistory = true;
+}
+
+function getLowestEntropyCellInArray(cellArray) {
+	let lowestEntropyCells = [];
+	let lowestValue;
+	cellArray.forEach((currValue) => {
+		if (lowestEntropyCells.length === 0 || currValue.entropy < prevValue) {
+			lowestEntropyCells = [currValue];
+			lowestValue = currValue.entropy;
+		}
+		else {
+			lowestEntropyCells.push(currValue);
+		}
+	}, 0);
+
+	return lowestEntropyCells[0];
+}
+
+function getHighestEntropyCellInArray(cellArray) {
+	let highestEntropyCells = [];
+	let highestValue;
+	cellArray.forEach((currValue) => {
+		if (highestEntropyCells.length === 0 || currValue.entropy > highestValue) {
+			highestEntropyCells = [currValue];
+			highestValue = currValue.entropy;
+		}
+		else {
+			highestEntropyCells.push(currValue);
+		}
+	}, 0);
+
+	return highestEntropyCells;
 }

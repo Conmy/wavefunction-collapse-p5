@@ -76,7 +76,7 @@ class WfcGrid {
         for (let i=0; i<this.grid.length; i++) {
             for (let j=0; j<this.grid[i].length; j++) {
                 const currentCell = this.getCell(j, i);
-                currentCell.calculateEnthropy(this.tiles);
+                currentCell.calculateEntropy(this.tiles);
             }
         }
     }
@@ -143,8 +143,8 @@ class WfcGrid {
         // TODO: move this out to be done AFTER checking that it is valid for all 4 sides.
         // set the tile options on the compCell.
         compCell.setTileOptions(validTileOptions);
-        // recalculate enthropy for the cell.
-        compCell.calculateEnthropy(this.tiles);
+        // recalculate entropy for the cell.
+        compCell.calculateEntropy(this.tiles);
         return true;
     }
 
@@ -169,7 +169,7 @@ class WfcGrid {
         return fullyPopulated;
     }
 
-    getCellOfHighestEnthropy() {
+    getCellOfHighestEntropy() {
         let largestValue = -100;
         let largestCells = [];
 
@@ -179,12 +179,12 @@ class WfcGrid {
 
                 if (curentCell.status === WfcStatus.OPEN) {
                     if (largestValue === -100) {
-                        largestValue = currentCell.enthropy;
+                        largestValue = currentCell.entropy;
                         largestCells.push(curentCell);
-                    } else if (currentCell.enthropy === largestValue) {
+                    } else if (currentCell.entropy === largestValue) {
                         largestCells.push(currentCell);
-                    } else if (currentCell.enthropy > largestValue) {
-                        largestValue = currentCell.enthropy;
+                    } else if (currentCell.entropy > largestValue) {
+                        largestValue = currentCell.entropy;
                         largestCells = [currentCell];
                     }
                 }
@@ -200,31 +200,31 @@ class WfcGrid {
 
     /**
      *
-     * @returns The cell with the smallest enthropy value.
+     * @returns The cell with the smallest entropy value.
      */
-    getCellOfLeastEnthropy() {
+    getCellOfLeastEntropy() {
         let smallestValue;
         let smallestCells = [];
 
-        this.grid.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                // only recalculate enthropy of open cells.
-                if (cell.status === WfcStatus.OPEN) {
-                    if (!smallestValue) {
-                        // populate the smallestValue on first pass
-                        smallestValue = cell.enthropy;
-                        smallestCells.push(cell);
-                    } else if (cell.enthropy === smallestValue) {
-                        smallestCells.push(cell)
-                    } else if (cell.enthropy < smallestValue) {
-                        smallestCells = [cell];
-                        smallestValue = cell.enthropy;
+        for (let i=0; i < this.grid.length; i++) {
+            for (let j=0; j < this.grid[i].length; j++) {
+                const currCell = this.getCell(j, i);
+                if (currCell.status === WfcStatus.OPEN) {
+                    if (smallestCells.length === 0
+                        || currCell.entropy < smallestValue) {
+                        smallestValue = currCell.entropy;
+                        smallestCells = [currCell];
+                    } else if (currCell.entropy === smallestValue) {
+                        smallestCells.push(currCell);
                     }
                 }
-            });
-        });
+            }
+        }
 
-        if (smallestCells.length >= 1) {
+        if (smallestCells.length === 1) {
+            return smallestCells[0];
+        }
+        if (smallestCells.length > 1) {
             const returnCell = smallestCells[Math.floor(Math.random() * smallestCells.length)];
             return returnCell;
         } else {

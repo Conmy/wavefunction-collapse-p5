@@ -44,13 +44,13 @@ test('grid property inside WfcGrid is initialized on contstruction', () => {
 });
 
 describe('calculateAllCellEntropies', () => {
-    test('calls calculateEnthropy on all cells in the grid', () => {
+    test('calls calculateEntropy on all cells in the grid', () => {
         const cols = 4;
         const rows = 3;
         const grid = new WfcGrid(cols, rows, 10, 10, [1,2,3,4,5]);
 
         const cellMock = {
-            calculateEnthropy: jest.fn()
+            calculateEntropy: jest.fn()
         };
 
         grid.grid = [
@@ -65,7 +65,7 @@ describe('calculateAllCellEntropies', () => {
 
         grid.calculateAllCellEnthropies();
 
-        expect(cellMock.calculateEnthropy.mock.calls.length).toBe(rows*cols);
+        expect(cellMock.calculateEntropy.mock.calls.length).toBe(rows*cols);
 
     });
 });
@@ -103,26 +103,27 @@ describe('addTileVariants', () => {
     });
 });
 
-describe('getCellOfLeastEnthropy', () => {
-    test('returns the cell with the lowest enthropy value', () => {
+describe('getCellOfLeastEntropy', () => {
+    test('returns the cell with the lowest entropy value', () => {
         const lowestRowIndex = 0;
         const lowestColIndex = 3;
         const grid = new WfcGrid(5,1,1,1,[]);
 
-        grid.grid.forEach((rows, rowIndex) => {
-            rows.forEach((cell, colIndex) => {
-                if (colIndex === lowestColIndex && rowIndex === lowestRowIndex) {
-                    cell.enthropy = 1.234;
+        for (let i=0; i < grid.grid.length; i++) {
+            for (let j=0; j < grid.grid[i].length; j++) {
+                const cell = grid.getCell(j, i);
+                if (i === lowestRowIndex && j === lowestColIndex) {
+                    cell.entropy = 1.234;
                 } else {
-                    cell.enthropy = 2.2213;
+                    cell.entropy = 2.2213;
                 }
-            });
-        });
+            }
+        }
 
-        const lowestEnthropyCell = grid.getCellOfLeastEnthropy();
+        const lowestEntropyCell = grid.getCellOfLeastEntropy();
 
-        expect(lowestEnthropyCell.row).toBe(lowestRowIndex);
-        expect(lowestEnthropyCell.column).toBe(lowestColIndex);
+        expect(lowestEntropyCell.row).toBe(lowestRowIndex);
+        expect(lowestEntropyCell.column).toBe(lowestColIndex);
     });
 });
 
